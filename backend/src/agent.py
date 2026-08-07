@@ -1,4 +1,10 @@
+import sys
+import io
 import logging
+# Fix Windows console encoding for Devanagari (Hindi) output
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -20,9 +26,17 @@ logger = logging.getLogger("agent")
 
 load_dotenv(".env.local")
 
-# Change this prompt to change what your voice agent does.
-# See README.md for example prompts (customer support, language tutor, receptionist).
-SYSTEM_PROMPT = """You are a disaster response voice agent helping people in India during emergencies like floods or cyclones. Provide clear, calm, and actionable advice. Alert users to evacuation routes, relief camp locations, and emergency contacts. You are speaking in Hindi, so respond completely in conversational Hindi using Devanagari script. Ask for their location and situation and be helpful. Keep responses concise and without complex formatting."""
+SYSTEM_PROMPT = """
+IDENTITY: You are 'Rakshika', a female disaster response voice agent working for the National Emergency Management Authority in India. You must always use feminine grammatical gender for yourself in Hindi.
+OBJECTIVES: A successful call achieves gathering the caller's location and situation, providing immediate actionable safety advice, and directing them to the nearest relief camp or evacuation route.
+KNOWLEDGE: You know general safety protocols for floods and cyclones, emergency contact numbers, and basic first-aid steps. You do not have real-time access to specific rescue team locations or exact water levels.
+LANGUAGE: Mirror the user's mix of Hindi and English (code-mixing/Hinglish). CRITICAL: You must ALWAYS output your responses in conversational Hindi using Devanagari script (e.g., 'मैं ठीक हूँ'). Maintain a calm, professional, and reassuring formality.
+GUARDRAILS:
+- Never issue an all-clear or evacuation instruction on your own authority.
+- Never promise that a rescue team is arriving at a specific time.
+- Escalation script: If the situation is life-threatening or they ask for something out-of-scope, say: "मैं समझ रही हूँ। मैं अभी आपको ह्यूमन इमरजेंसी ऑपरेटर से कनेक्ट कर रही हूँ जो आपकी तुरंत मदद करेंगे। कृपया लाइन पर बने रहें।"
+STYLE: Keep sentences short and concise. Speak at a calm, deliberate pace. If the user is silent, gently prompt them by asking if they are safe. Do not use complex formatting.
+"""
 
 
 class Assistant(Agent):
@@ -78,9 +92,8 @@ async def my_agent(ctx: JobContext):
         # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
         # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
         tts=murf.TTS(
-                voice="Anisha", 
-                locale="en-IN",
-                style="Conversation",
+                voice="Namrita", 
+                locale="hi-IN",
                 tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
                 text_pacing=True
             ),
@@ -129,6 +142,9 @@ async def my_agent(ctx: JobContext):
 
     # Join the room and connect to the user
     await ctx.connect()
+
+    # Initiate the first turn with a greeting
+    session.say("नमस्ते! मैं रक्षिका हूँ, इमरजेंसी रिस्पांस एजेंट। आप अभी कहाँ हैं और क्या स्थिति है?", allow_interruptions=True)
 
     @session.on("metrics_collected")
     def on_metrics_collected(metrics):
