@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { WarningIcon } from '@phosphor-icons/react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
 function WelcomeImage() {
@@ -20,7 +23,7 @@ function WelcomeImage() {
 
 interface WelcomeViewProps {
   startButtonText: string;
-  onStartCall: () => void;
+  onStartCall: () => Promise<void> | void;
 }
 
 export const WelcomeView = ({
@@ -28,19 +31,40 @@ export const WelcomeView = ({
   onStartCall,
   ref,
 }: React.ComponentProps<'div'> & WelcomeViewProps) => {
+  const [micError, setMicError] = useState<string | null>(null);
+
+  const handleStart = async () => {
+    setMicError(null);
+    try {
+      await onStartCall();
+    } catch (e: unknown) {
+      setMicError(
+        'Microphone access denied. Please allow microphone permissions in your browser to start the emergency call.'
+      );
+    }
+  };
+
   return (
     <div ref={ref}>
-      <section className="bg-background flex flex-col items-center justify-center text-center">
+      <section className="bg-background flex flex-col items-center justify-center px-4 text-center">
         <WelcomeImage />
 
         <p className="text-foreground max-w-prose pt-1 leading-6 font-medium">
-          Chat live with your voice AI agent
+          Rakshika is ready. Tap below to connect for emergency assistance.
         </p>
+
+        {micError && (
+          <Alert variant="destructive" className="mt-4 max-w-md text-left">
+            <WarningIcon weight="bold" className="size-5" />
+            <AlertTitle>Microphone Error</AlertTitle>
+            <AlertDescription>{micError}</AlertDescription>
+          </Alert>
+        )}
 
         <Button
           size="lg"
-          onClick={onStartCall}
-          className="mt-6 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase"
+          onClick={handleStart}
+          className="bg-accent text-accent-foreground hover:bg-accent/90 mt-6 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase"
         >
           {startButtonText}
         </Button>

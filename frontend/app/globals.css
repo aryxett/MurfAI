@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+
+  --color-navy-950: #000000;
+  --color-navy-900: #0a0a0a;
+  --color-navy-850: #111111;
+  --color-navy-800: #1a1a1a;
+  --color-navy-700: #262626;
+  --color-line: #222222;
+  --color-off-white: #eaf0fa;
+  --color-slate-400: #7c8ca6;
+  --color-slate-500: #5c6f8c;
+  --color-amber: #f0a93a;
+  --color-safe-green: #35b08a;
+  --color-alert-red: #e15252;
+}
+
+:root {
+  --navy-950: #000000;
+  --navy-900: #0a0a0a;
+  --navy-850: #111111;
+  --navy-800: #1a1a1a;
+  --navy-700: #262626;
+  --line: #222222;
+  --off-white: #eaf0fa;
+  --slate-400: #7c8ca6;
+  --slate-500: #5c6f8c;
+  --amber: #f0a93a;
+  --safe-green: #35b08a;
+  --alert-red: #e15252;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background-color: var(--navy-950);
+  color: var(--off-white);
+}
+
+/* Background overlay grid and gradient for landing page */
+.bg-radar-grid {
+  background-image:
+    linear-gradient(to right, rgba(34, 58, 90, 0.2) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 58, 90, 0.2) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
+}
+
+.bg-radial-navy {
+  background: radial-gradient(circle at center, var(--navy-850) 0%, var(--navy-950) 100%);
+}

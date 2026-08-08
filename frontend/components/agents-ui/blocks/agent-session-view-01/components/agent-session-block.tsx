@@ -241,22 +241,37 @@ export function AgentSessionView_01({
         {...BOTTOM_VIEW_MOTION_PROPS}
         className="absolute inset-x-3 bottom-0 z-50 md:inset-x-12"
       >
-        {/* Pre-connect message */}
-        {isPreConnectBufferEnabled && (
-          <AnimatePresence>
-            {messages.length === 0 && (
+        <AnimatePresence>
+          {(() => {
+            let statusText = '';
+            if (session.connectionState === 'connecting') {
+              statusText = 'Connecting to Emergency operator...';
+            } else if (agentState === 'speaking') {
+              statusText = 'Rakshika is speaking...';
+            } else if (agentState === 'listening') {
+              statusText = 'Rakshika is listening to you...';
+            } else if (agentState === 'thinking') {
+              statusText = 'Rakshika is thinking...';
+            } else if (agentState === 'connecting') {
+              statusText = 'Agent is joining...';
+            } else if (messages.length === 0) {
+              statusText = preConnectMessage;
+            }
+
+            if (!statusText) return null;
+
+            return (
               <MotionMessage
-                key="pre-connect-message"
+                key="status-message"
                 duration={2}
-                aria-hidden={messages.length > 0}
                 {...SHIMMER_MOTION_PROPS}
-                className="pointer-events-none mx-auto block w-full max-w-2xl pb-4 text-center text-sm font-semibold"
+                className="text-accent pointer-events-none mx-auto block w-full max-w-2xl pb-4 text-center text-sm font-semibold"
               >
-                {preConnectMessage}
+                {statusText}
               </MotionMessage>
-            )}
-          </AnimatePresence>
-        )}
+            );
+          })()}
+        </AnimatePresence>
         <div className="bg-background relative mx-auto max-w-2xl pb-3 md:pb-12">
           <Fade bottom className="absolute inset-x-0 top-0 h-4 -translate-y-full" />
           <AgentControlBar

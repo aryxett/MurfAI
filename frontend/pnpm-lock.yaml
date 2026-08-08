@@ -65,6 +65,9 @@ importers:
       ai:
         specifier: ^5.0.105
         version: 5.0.105(zod@4.1.13)
+      any-ascii:
+        specifier: ^0.3.3
+        version: 0.3.3
       buffer-image-size:
         specifier: ^0.6.4
         version: 0.6.4
@@ -80,6 +83,9 @@ importers:
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.1.1)
+      framer-motion:
+        specifier: ^13.0.0
+        version: 13.0.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       jose:
         specifier: ^6.0.12
         version: 6.1.0
@@ -1860,6 +1866,10 @@ packages:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
     engines: {node: '>=8'}
 
+  any-ascii@0.3.3:
+    resolution: {integrity: sha512-8hm+zPrc1VnlxD5eRgMo9F9k2wEMZhbZVLKwA/sPKIt6ywuz7bI9uV/yb27uvc8fv8q6Wl2piJT51q1saKX0Jw==}
+    engines: {node: '>=12.20'}
+
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
@@ -2582,6 +2592,17 @@ packages:
     peerDependenciesMeta:
       '@emotion/is-prop-valid':
         optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
+  framer-motion@13.0.0:
+    resolution: {integrity: sha512-nQGZXlsiigN48nzvE7AL1GLekql+etcphp8v+PQ0X04oxO20yVmV9rU9XQ25c136RdeIYoaWlKT9oAwvJza3mg==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
       react:
         optional: true
       react-dom:
@@ -3316,8 +3337,14 @@ packages:
   motion-dom@12.16.0:
     resolution: {integrity: sha512-Z2nGwWrrdH4egLEtgYMCEN4V2qQt1qxlKy/uV7w691ztyA41Q5Rbn0KNGbsNVDZr9E8PD2IOQ3hSccRnB6xWzw==}
 
+  motion-dom@13.0.0:
+    resolution: {integrity: sha512-Xk+SJas70uMAUIApg+m3lZDShxI3LBFHq7mFGbBKoRXc2PVPDyAKmzN64Bbzt4CZdP/CItTiJxWtn4TA0v53Ng==}
+
   motion-utils@12.12.1:
     resolution: {integrity: sha512-f9qiqUHm7hWSLlNW8gS9pisnsN7CRFRD58vNjptKdsqFLpkVnX00TNeD6Q0d27V9KzT7ySFyK1TZ/DShfVOv6w==}
+
+  motion-utils@13.0.0:
+    resolution: {integrity: sha512-7DnN7TmbLcYXcG4RVadXIihWlyuM9afoUww8Y5Agg431kGKiuL2/OMyP4mJ5wLz+pvN3t5ySClLOaVXJ+wekRQ==}
 
   motion@12.16.0:
     resolution: {integrity: sha512-P3HA83fnPMEGBLfKdD5vDdjH1Aa3wM3jT3+HX3fCVpy/4/lJiqvABajLgZenBu+rzkFzmeaPkvT7ouf9Tq5tVQ==}
@@ -5885,6 +5912,8 @@ snapshots:
     dependencies:
       color-convert: 2.0.1
 
+  any-ascii@0.3.3: {}
+
   argparse@2.0.1: {}
 
   aria-hidden@1.2.6:
@@ -6794,6 +6823,15 @@ snapshots:
     dependencies:
       motion-dom: 12.16.0
       motion-utils: 12.12.1
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
+
+  framer-motion@13.0.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+    dependencies:
+      motion-dom: 13.0.0
+      motion-utils: 13.0.0
       tslib: 2.8.1
     optionalDependencies:
       react: 19.1.1
@@ -7825,7 +7863,13 @@ snapshots:
     dependencies:
       motion-utils: 12.12.1
 
+  motion-dom@13.0.0:
+    dependencies:
+      motion-utils: 13.0.0
+
   motion-utils@12.12.1: {}
+
+  motion-utils@13.0.0: {}
 
   motion@12.16.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:

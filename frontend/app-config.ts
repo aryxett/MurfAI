@@ -33,9 +33,9 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'Disaster Response Coordinator',
-  pageTitle: 'Disaster Response Agent',
-  pageDescription: 'An AI voice agent for coordinating disaster relief and emergency info.',
+  companyName: 'Rakshika Emergency Helpline',
+  pageTitle: 'Rakshika Emergency Response',
+  pageDescription: 'Disaster response voice AI for immediate assistance and rescue coordination.',
 
   supportsChatInput: true,
   supportsVideoInput: true,
@@ -43,10 +43,10 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   isPreConnectBufferEnabled: true,
 
   logo: '/logo.png',
-  accent: '#0ea5e9', // Disaster response blue
+  accent: '#ef4444', // Emergency Red
   logoDark: '/logo.png',
-  accentDark: '#38bdf8',
-  startButtonText: 'Connect to Emergency Services',
+  accentDark: '#f87171',
+  startButtonText: 'Start Emergency Call',
 
   // optional: audio visualization configuration
   // audioVisualizerType: 'bar',

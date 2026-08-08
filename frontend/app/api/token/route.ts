@@ -2,52 +2,40 @@ import { NextResponse } from 'next/server';
 import { AccessToken, type AccessTokenOptions, type VideoGrant } from 'livekit-server-sdk';
 import { RoomConfiguration } from '@livekit/protocol';
 
-type ConnectionDetails = {
-  serverUrl: string;
-  roomName: string;
-  participantName: string;
-  participantToken: string;
-};
-
 // NOTE: you are expected to define the following environment variables in `.env.local`:
 const API_KEY = process.env.LIVEKIT_API_KEY;
 const API_SECRET = process.env.LIVEKIT_API_SECRET;
-const LIVEKIT_URL = process.env.LIVEKIT_URL;
+const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL;
 const AGENT_NAME = process.env.AGENT_NAME;
 
 // don't cache the results
 export const revalidate = 0;
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
-    if (LIVEKIT_URL === undefined) {
-      throw new Error('LIVEKIT_URL is not defined');
+    if (!LIVEKIT_URL) {
+      throw new Error('NEXT_PUBLIC_LIVEKIT_URL is not defined');
     }
-    if (API_KEY === undefined) {
+    if (!API_KEY) {
       throw new Error('LIVEKIT_API_KEY is not defined');
     }
-    if (API_SECRET === undefined) {
+    if (!API_SECRET) {
       throw new Error('LIVEKIT_API_SECRET is not defined');
     }
 
-    // Parse room config from request body (if provided).
-    const body = await req.json().catch(() => ({}));
     let roomConfig: RoomConfiguration | undefined;
-    if (body?.room_config) {
-      roomConfig = RoomConfiguration.fromJson(body.room_config, { ignoreUnknownFields: true });
-    } else if (AGENT_NAME) {
-      // When AGENT_NAME is set, configure explicit agent dispatch so the named
-      // agent worker picks up the job when a user joins the room.
+    if (AGENT_NAME) {
+      // When AGENT_NAME is set, configure explicit agent dispatch
       roomConfig = RoomConfiguration.fromJson(
         { agents: [{ agentName: AGENT_NAME }] },
         { ignoreUnknownFields: true }
       );
     }
-      
+
     // Generate participant token
     const participantName = 'user';
-    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
-    const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
+    const participantIdentity = `rakshika_user_${Math.floor(Math.random() * 10_000)}`;
+    const roomName = `rakshika_room_${Math.floor(Math.random() * 10_000)}`;
 
     const participantToken = await createParticipantToken(
       { identity: participantIdentity, name: participantName },
@@ -55,17 +43,19 @@ export async function POST(req: Request) {
       roomConfig
     );
 
-    // Return connection details
-    const data: ConnectionDetails = {
-      serverUrl: LIVEKIT_URL,
-      roomName,
-      participantName,
-      participantToken,
-    };
     const headers = new Headers({
       'Cache-Control': 'no-store',
     });
-    return NextResponse.json(data, { headers });
+
+    return NextResponse.json(
+      {
+        serverUrl: LIVEKIT_URL,
+        roomName,
+        participantName,
+        participantToken,
+      },
+      { headers }
+    );
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);
