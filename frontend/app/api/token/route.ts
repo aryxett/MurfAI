@@ -32,9 +32,12 @@ export async function GET(req: Request) {
       );
     }
 
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get('userId');
+
     // Generate participant token
     const participantName = 'user';
-    const participantIdentity = `rakshika_user_${Math.floor(Math.random() * 10_000)}`;
+    const participantIdentity = userId || `rakshika_user_${Math.floor(Math.random() * 10_000)}`;
     const roomName = `rakshika_room_${Math.floor(Math.random() * 10_000)}`;
 
     const participantToken = await createParticipantToken(
@@ -52,6 +55,7 @@ export async function GET(req: Request) {
         serverUrl: LIVEKIT_URL,
         roomName,
         participantName,
+        participantIdentity,
         participantToken,
       },
       { headers }

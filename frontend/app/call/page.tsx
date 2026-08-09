@@ -31,7 +31,10 @@ export default function CallPage() {
 
       // Permission granted, fetch token
       setPhase('fetching-token');
-      const res = await fetch('/api/token');
+      const storedUserId = localStorage.getItem('rakshika_user_id');
+      const url = storedUserId ? `/api/token?userId=${storedUserId}` : '/api/token';
+      
+      const res = await fetch(url);
       if (!res.ok) {
         throw new Error(`Failed to fetch token: ${res.statusText}`);
       }
@@ -39,6 +42,11 @@ export default function CallPage() {
       if (!data.participantToken || !data.serverUrl) {
         throw new Error('Invalid token response from server');
       }
+      
+      if (!storedUserId && data.participantIdentity) {
+        localStorage.setItem('rakshika_user_id', data.participantIdentity);
+      }
+      
       setTokenInfo({ token: data.participantToken, url: data.serverUrl });
       setPhase('live');
     } catch (err: unknown) {
