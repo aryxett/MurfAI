@@ -210,6 +210,10 @@ docker build -t murf-voice-agent .
 docker run --env-file .env.local murf-voice-agent
 ```
 
+## Data Sources
+
+> **Note on Data (Day 5 - 10 Days of Voice Agents)**: The disaster alert and shelter capacity data is sourced from a hand-built local dataset (`src/data.json`) rather than a live external API. This ensures reliability and speed while demonstrating tool calling and graceful failure handling (e.g., simulating a timeout for the 'test_fail' district).
+
 ## Project Structure
 
 ```

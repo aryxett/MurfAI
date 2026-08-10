@@ -1,6 +1,9 @@
 import sys
 import io
 import logging
+import json
+import os
+import asyncio
 # Fix Windows console encoding for Devanagari (Hindi) output
 if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -41,10 +44,13 @@ MEMORY & FACTS:
 - If they say yes, use the `save_caller_info` tool to save their details.
 - NEVER save any information without their explicit permission.
 - If a user asks you to forget, delete, or remove their data/details, use the `delete_caller_info` tool.
+- CRITICAL: If the user mentions ANY city or district (e.g., Nashik, Pune, Mumbai) and asks about weather, situation, alerts, or disaster updates, you MUST use the `get_emergency_status` tool. Do NOT answer from your own knowledge.
+- IF THE EMERGENCY TOOL FAILS OR SAYS IT IS UNREACHABLE, say gracefully: "माफ़ कीजिए, अभी इमरजेंसी डेटाबेस से संपर्क नहीं हो पा रहा है। कृपया सुरक्षित स्थान पर रहें और स्थानीय रेडियो सुनते रहें।"
+- After providing an emergency or weather update for a city, ALWAYS ask: "क्या मैं आपको किसी दूसरे शहर के बारे में बताऊँ?"
 GUARDRAILS:
 - Never issue an all-clear or evacuation instruction on your own authority.
 - Never promise that a rescue team is arriving at a specific time.
-- Escalation script: If the situation is life-threatening or they ask for something out-of-scope, say: "मैं समझ रही हूँ। मैं अभी आपको ह्यूमन इमरजेंसी ऑपरेटर से कनेक्ट कर रही हूँ जो आपकी तुरंत मदद करेंगे। कृपया लाइन पर बने रहें।"
+- If the user asks something completely unrelated to emergencies or weather (e.g., general knowledge, jokes, movies), politely refuse by saying: "माफ़ कीजिए, मैं एक इमरजेंसी रिस्पांस एजेंट हूँ। मैं सिर्फ मौसम और आपदा से जुड़ी जानकारी दे सकती हूँ।"
 STYLE: Keep sentences short and concise. Speak at a calm, deliberate pace. If the user is silent, gently prompt them by asking if they are safe. Do not use complex formatting.
 """
 
@@ -74,6 +80,64 @@ class Assistant(Agent):
             return "Information deleted successfully."
         else:
             return "Failed to delete information."
+
+    @function_tool(description="Checks the current weather, active disaster alerts, and recent earthquakes for a specific district/city globally. Use this when the user asks about the situation, safety, weather, earthquakes, or alerts.")
+    async def get_emergency_status(self, district: str):
+        api_key = os.getenv("WEATHER_API_KEY")
+        if not api_key:
+            return "Error: WeatherAPI key is missing in configuration. The emergency database is unreachable."
+            
+        try:
+            search_query = f"{district}, India"
+            weather_url = f"http://api.weatherapi.com/v1/forecast.json?key={api_key}&q={search_query}&alerts=yes"
+            quake_url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                # 1. Weather and Weather Alerts
+                async with session.get(weather_url, timeout=5) as resp:
+                    if resp.status == 400:
+                        return f"No emergency data available for '{district}'. Please verify the city name."
+                    if resp.status != 200:
+                        return f"Error: The emergency database is currently unreachable (HTTP {resp.status})."
+                    
+                    data = await resp.json()
+                    condition = data.get("current", {}).get("condition", {}).get("text", "Unknown")
+                    temp = data.get("current", {}).get("temp_c", "Unknown")
+                    alerts = data.get("alerts", {}).get("alert", [])
+                    
+                    status_message = f"Current weather in {district}: {temp}°C, {condition}. "
+                    
+                    if alerts:
+                        alert_headlines = [alert.get("headline", "") for alert in alerts[:2]]
+                        status_message += f"ACTIVE ALERTS: {' | '.join(alert_headlines)}. "
+                    else:
+                        status_message += "No active weather/disaster alerts. "
+
+                # 2. Earthquake Data (USGS Free API)
+                try:
+                    async with session.get(quake_url, timeout=5) as q_resp:
+                        if q_resp.status == 200:
+                            q_data = await q_resp.json()
+                            earthquakes = q_data.get("features", [])
+                            local_quakes = []
+                            for eq in earthquakes:
+                                place = eq.get("properties", {}).get("place", "")
+                                if place and district.lower() in place.lower():
+                                    mag = eq.get("properties", {}).get("mag", 0)
+                                    if mag >= 3.5: # Only report noticeable quakes (Magnitude 3.5+)
+                                        local_quakes.append(f"Magnitude {mag} near {place}")
+                            
+                            if local_quakes:
+                                status_message += f"EARTHQUAKE ALERT: {' | '.join(local_quakes[:2])}. "
+                            else:
+                                status_message += f"No recent earthquakes in or near {district}. "
+                except Exception as e:
+                    # Ignore earthquake API failure silently to not break weather
+                    pass
+                        
+                return status_message
+        except Exception as e:
+            return f"Error: Could not connect to emergency database due to timeout or network issue."
 
 server = AgentServer()
 
@@ -135,17 +199,8 @@ async def my_agent(ctx: JobContext):
 
     logger.info(f"Participant joined with identity: {user_identity}")
 
-    # Initiate the first turn with a greeting based on memory
-    if caller and caller.get("name"):
-        name = caller.get("name")
-        location = caller.get("location")
-        greeting = f"नमस्ते {name}, फिर से स्वागत है! "
-        if location:
-            greeting += f"क्या {location} में अब सब सुरक्षित है? "
-        greeting += "मैं आपकी कैसे मदद कर सकती हूँ?"
-        session.say(greeting, allow_interruptions=False)
-    else:
-        session.say("नमस्ते! मैं रक्षिका हूँ, इमरजेंसी रिस्पांस एजेंट। आप अभी कहाँ हैं और क्या स्थिति है?", allow_interruptions=False)
+    # Initiate the first turn by asking if they have spoken before, as requested by the user
+    session.say("नमस्ते! मैं रक्षिका हूँ, नेशनल इमरजेंसी रिस्पांस एजेंट। क्या हम पहले बात कर चुके हैं? कृपया अपना नाम बताइये।", allow_interruptions=False)
 
     @session.on("metrics_collected")
     def on_metrics_collected(metrics):
