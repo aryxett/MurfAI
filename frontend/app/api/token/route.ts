@@ -34,11 +34,13 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
+    const isOutbound = searchParams.get('outbound') === 'true';
 
     // Generate participant token
     const participantName = 'user';
-    const participantIdentity = userId || `rakshika_user_${Math.floor(Math.random() * 10_000)}`;
-    const roomName = `rakshika_room_${Math.floor(Math.random() * 10_000)}`;
+    const participantIdentity = userId || 'rakshika_user_1763';
+    const roomPrefix = isOutbound ? 'outbound-call-' : 'rakshika_room_';
+    const roomName = `${roomPrefix}${Math.floor(Math.random() * 10_000)}`;
 
     const participantToken = await createParticipantToken(
       { identity: participantIdentity, name: participantName },

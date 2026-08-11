@@ -14,6 +14,7 @@ dependencies = [
     "livekit-murf>=0.1.1",
     "livekit-plugins-noise-cancellation~=0.2",
     "python-dotenv",
+    "twilio>=9.10.9",
 ]
 
 [dependency-groups]

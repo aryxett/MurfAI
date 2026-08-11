@@ -142,7 +142,7 @@ class Assistant(Agent):
 server = AgentServer()
 
 def prewarm(proc: JobProcess):
-    proc.userdata["vad"] = silero.VAD.load(min_silence_duration=0.5)
+    proc.userdata["vad"] = silero.VAD.load(min_silence_duration=1.0)
 
 server.setup_fnc = prewarm
 
@@ -185,22 +185,19 @@ async def my_agent(ctx: JobContext):
     await session.start(
         agent=agent_instance,
         room=ctx.room,
-        room_options=room_io.RoomOptions(
-            audio_input=room_io.AudioInputOptions(
-                noise_cancellation=lambda params: (
-                    noise_cancellation.BVCTelephony()
-                    if params.participant.kind
-                    == rtc.ParticipantKind.PARTICIPANT_KIND_SIP
-                    else noise_cancellation.BVC()
-                ),
-            ),
-        ),
     )
 
     logger.info(f"Participant joined with identity: {user_identity}")
 
-    # Initiate the first turn by asking if they have spoken before, as requested by the user
-    session.say("नमस्ते! मैं रक्षिका हूँ, नेशनल इमरजेंसी रिस्पांस एजेंट। क्या हम पहले बात कर चुके हैं? कृपया अपना नाम बताइये।", allow_interruptions=False)
+    # Check if this is an outbound call based on the room name
+    is_outbound = ctx.room.name.startswith("outbound-call")
+
+    if is_outbound:
+        # Mandatory Day 6 Outbound Greeting
+        session.say("नमस्ते! मैं नेशनल इमरजेंसी रिस्पांस से रक्षिका बात कर रही हूँ। यह एक वेलफेयर चेक कॉल है। अगर आप यह कॉल नहीं चाहते हैं, तो कृपया 'स्टॉप' बोलें।", allow_interruptions=False)
+    else:
+        # Initiate the first turn by asking if they have spoken before, as requested by the user
+        session.say("नमस्ते! मैं रक्षिका हूँ, नेशनल इमरजेंसी रिस्पांस एजेंट। क्या हम पहले बात कर चुके हैं? कृपया अपना नाम बताइये।", allow_interruptions=False)
 
     @session.on("metrics_collected")
     def on_metrics_collected(metrics):

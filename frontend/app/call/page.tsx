@@ -14,6 +14,7 @@ type Phase =
   | 'mic-denied'
   | 'fetching-token'
   | 'token-error'
+  | 'incoming-call'
   | 'live'
   | 'ended';
 
@@ -22,7 +23,7 @@ export default function CallPage() {
   const [tokenInfo, setTokenInfo] = useState<{ token: string; url: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>('');
 
-  const handleStartConversation = async () => {
+  const handleStartConversation = async (isOutbound = false) => {
     setPhase('requesting-mic');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -32,7 +33,8 @@ export default function CallPage() {
       // Permission granted, fetch token
       setPhase('fetching-token');
       const storedUserId = localStorage.getItem('rakshika_user_id');
-      const url = storedUserId ? `/api/token?userId=${storedUserId}` : '/api/token';
+      const base = storedUserId ? `/api/token?userId=${storedUserId}` : '/api/token';
+      const url = isOutbound ? (base.includes('?') ? `${base}&outbound=true` : `${base}?outbound=true`) : base;
       
       const res = await fetch(url);
       if (!res.ok) {
@@ -135,18 +137,59 @@ export default function CallPage() {
                 ))}
               </div>
 
-              <motion.button
-                onClick={handleStartConversation}
-                className="bg-amber text-navy-950 font-display hover:bg-amber/90 focus-visible:outline-amber inline-flex w-full items-center justify-center rounded-full px-8 py-4 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 sm:w-auto"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Start conversation
-              </motion.button>
+              <div className="flex flex-col gap-4 sm:flex-row w-full sm:w-auto">
+                <motion.button
+                  onClick={() => handleStartConversation(false)}
+                  className="bg-amber text-navy-950 font-display hover:bg-amber/90 focus-visible:outline-amber inline-flex w-full items-center justify-center rounded-full px-8 py-4 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 sm:w-auto"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Start conversation
+                </motion.button>
+                <motion.button
+                  onClick={() => setPhase('incoming-call')}
+                  className="border border-amber text-amber font-display hover:bg-amber/10 focus-visible:outline-amber inline-flex w-full items-center justify-center rounded-full px-8 py-4 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 sm:w-auto"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Simulate Incoming Call
+                </motion.button>
+              </div>
 
               <div className="mt-8 font-mono text-[10px] leading-relaxed text-slate-500 sm:text-xs">
                 For life-threatening emergencies, contact local emergency services directly.
                 Rakshika provides general guidance only.
+              </div>
+            </PhaseShell>
+          )}
+
+          {phase === 'incoming-call' && (
+            <PhaseShell keyName="incoming-call">
+              <StatusBadge color="green" pulse>
+                Incoming Call
+              </StatusBadge>
+              <h2 className="font-display text-off-white mt-8 mb-4 text-4xl font-bold tracking-tight">
+                Rakshika
+              </h2>
+              <p className="font-mono text-slate-400 mb-12">Emergency Response System</p>
+              
+              <div className="flex gap-8">
+                <motion.button
+                  onClick={() => setPhase('ready')}
+                  className="bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30 flex h-20 w-20 items-center justify-center rounded-full transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Decline
+                </motion.button>
+                <motion.button
+                  onClick={() => handleStartConversation(true)}
+                  className="bg-safe-green text-navy-950 hover:bg-safe-green/90 flex h-20 w-20 items-center justify-center rounded-full transition-colors shadow-[0_0_20px_rgba(34,197,94,0.4)] animate-pulse"
+                  whileHover={{ scale: 1.05, animation: 'none' }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Answer
+                </motion.button>
               </div>
             </PhaseShell>
           )}
