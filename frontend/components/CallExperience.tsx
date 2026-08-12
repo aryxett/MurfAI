@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useVoiceAssistant, DisconnectButton, useLocalParticipant, useTrackVolume, useTrackTranscription, TrackToggle, useTracks } from '@livekit/components-react';
+import { useVoiceAssistant, DisconnectButton, useLocalParticipant, useTrackVolume, useTrackTranscription, TrackToggle, useTracks, useDataChannel } from '@livekit/components-react';
 import { AgentAudioVisualizerAura } from './agents-ui/agent-audio-visualizer-aura';
 import { StatusBadge } from './StatusBadge';
 import { Track, LocalAudioTrack } from 'livekit-client';
+import { Phone, Check } from 'lucide-react';
 
 export function CallExperience() {
   const { state, audioTrack, agentTranscriptions } = useVoiceAssistant();
@@ -87,6 +88,38 @@ export function CallExperience() {
   const activeLabel = activeSubtitle.label;
   const isActiveUser = activeSubtitle.isUser;
 
+  // Popup State
+  const [showEscalation, setShowEscalation] = React.useState(false);
+  const [escalationData, setEscalationData] = React.useState<any>(null);
+  const [isDispatched, setIsDispatched] = React.useState(false);
+
+  const { message: dataChannelMessage } = useDataChannel();
+
+  React.useEffect(() => {
+    if (!dataChannelMessage) return;
+    try {
+      const payload = JSON.parse(new TextDecoder().decode(dataChannelMessage.payload));
+      if (payload.type === 'escalation') {
+        setEscalationData(payload.data);
+        setShowEscalation(true);
+        setIsDispatched(false);
+
+        // Transition to Dispatched state after 3 seconds
+        setTimeout(() => {
+          setIsDispatched(true);
+        }, 3000);
+
+        // Hide after 7.5 seconds
+        setTimeout(() => {
+          setShowEscalation(false);
+          setEscalationData(null);
+        }, 7500);
+      }
+    } catch (e) {
+      console.error('Failed to parse escalation data channel message', e);
+    }
+  }, [dataChannelMessage]);
+
   return (
     <div className="flex flex-col items-center justify-between h-full w-full py-8">
       
@@ -135,6 +168,63 @@ export function CallExperience() {
         </DisconnectButton>
       </div>
       
+      {/* Escalation Overlay */}
+      {showEscalation && escalationData && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl transition-all duration-300">
+          <div className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
+            {/* Icon & Title */}
+            {!isDispatched ? (
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative flex items-center justify-center h-16 w-16 mb-4">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-40"></span>
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#e60026] shadow-[0_0_30px_rgba(220,38,38,0.5)]">
+                    <Phone className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                <h2 className="text-xl font-bold text-white tracking-wide">Calling Rescue Team</h2>
+                <div className="flex gap-1.5 mt-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative flex items-center justify-center h-16 w-16 mb-4">
+                  <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-[#10b981] opacity-20"></span>
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#10b981] shadow-[0_0_30px_rgba(16,185,129,0.4)]">
+                    <Check className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+                <h2 className="text-xl font-bold text-[#10b981] tracking-wide">Request Dispatched</h2>
+                <p className="text-sm text-gray-400 mt-1">Team has been alerted</p>
+              </div>
+            )}
+
+            {/* Card */}
+            <div className="w-[340px] rounded-xl border border-white/5 bg-[#111111]/80 p-5 shadow-2xl backdrop-blur-xl">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-3">
+                <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Reference</span>
+                <span className="text-sm font-bold text-white">{escalationData.id}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-3">
+                <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Urgency</span>
+                <span className="rounded-full bg-[#ca8a04]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#ca8a04] uppercase tracking-wider">{escalationData.urgency || 'HIGH'}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-3">
+                <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Caller</span>
+                <span className="text-sm font-medium text-white">{escalationData.who}</span>
+              </div>
+              <div className="pt-1">
+                <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase block mb-2">Situation</span>
+                <p className="text-sm text-gray-300 leading-relaxed font-body">
+                  {escalationData.what_happened} {escalationData.what_agent_checked}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -146,14 +146,6 @@ export default function CallPage() {
                 >
                   Start conversation
                 </motion.button>
-                <motion.button
-                  onClick={() => setPhase('incoming-call')}
-                  className="border border-amber text-amber font-display hover:bg-amber/10 focus-visible:outline-amber inline-flex w-full items-center justify-center rounded-full px-8 py-4 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 sm:w-auto"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Simulate Incoming Call
-                </motion.button>
               </div>
 
               <div className="mt-8 font-mono text-[10px] leading-relaxed text-slate-500 sm:text-xs">

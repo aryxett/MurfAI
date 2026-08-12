@@ -51,13 +51,21 @@ GUARDRAILS:
 - Never issue an all-clear or evacuation instruction on your own authority.
 - Never promise that a rescue team is arriving at a specific time.
 - If the user asks something completely unrelated to emergencies or weather (e.g., general knowledge, jokes, movies), politely refuse by saying: "माफ़ कीजिए, मैं एक इमरजेंसी रिस्पांस एजेंट हूँ। मैं सिर्फ मौसम और आपदा से जुड़ी जानकारी दे सकती हूँ।"
+ESCALATION RULES (HUMAN HELP):
+- You must ESCALATE to a human if: 1) The caller is trapped, injured, or needs urgent physical rescue. OR 2) The caller is reporting a missing person.
+- STEP 1: BEFORE calling the `create_escalation` tool, you MUST ask the caller for permission: "मुझे आपकी जानकारी रेस्क्यू टीम को भेजनी होगी। क्या मैं आपकी डिटेल्स उनके साथ शेयर कर सकती हूँ?"
+- CRITICAL: DO NOT call the `create_escalation` tool in the same turn when you ask for permission. You MUST stop speaking and wait for the user to reply.
+- STEP 2: Only call the `create_escalation` tool AFTER the user explicitly says yes in their next reply.
+- STEP 3: After the tool succeeds, give them the Reference ID and a clear next step. Example: "आपकी रिक्वेस्ट रेस्क्यू टीम को भेज दी गई है। आपका रेफरेंस नंबर [ID] है। कृपया शांत रहें, टीम जल्द ही आपसे संपर्क करेगी।"
+- CRITICAL RULE FOR TOOLS: When calling the `create_escalation` tool, you MUST fill all the function arguments in strictly English ONLY. Never use Hindi for the tool arguments. For the `who` argument, provide ONLY the short first name of the caller (no extra details).
 STYLE: Keep sentences short and concise. Speak at a calm, deliberate pace. If the user is silent, gently prompt them by asking if they are safe. Do not use complex formatting.
 """
 
 class Assistant(Agent):
-    def __init__(self, instructions: str, user_identity: str) -> None:
+    def __init__(self, instructions: str, user_identity: str, ctx: JobContext) -> None:
         super().__init__(instructions=instructions)
         self.user_identity = user_identity
+        self.ctx = ctx
 
     @function_tool(description="Saves or updates the caller's details after getting their permission.")
     async def save_caller_info(self, name: str = None, location: str = None, household_size: int = None, mobility_needs: str = None):
@@ -80,6 +88,60 @@ class Assistant(Agent):
             return "Information deleted successfully."
         else:
             return "Failed to delete information."
+
+    @function_tool(description="Creates a human escalation request when the caller is trapped, injured, or reporting a missing person. You MUST ask for permission before calling this tool.")
+    async def create_escalation(
+        self, 
+        who: str, # ONLY the caller's short name in English (e.g. "Aryan")
+        what_happened: str, # A short, 1-sentence summary of the situation in English (e.g. "Trapped in mud puddle.")
+        what_agent_checked: str, # A short summary in English of the steps the agent took before escalating (e.g., "Verified location and obtained permission to escalate.")
+        urgency: str, # MUST be exactly "HIGH" or "CRITICAL"
+        language: str, # MUST be exactly "Hindi/English" (Do not use "hi" or other variations)
+        preferred_contact: str # MUST be exactly "Phone Call"
+    ):
+        import random
+        req_id = f"REQ-{random.randint(1000, 9999)}"
+        
+        # Save to a JSON file in the frontend so it can be displayed on the dashboard
+        frontend_data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "frontend", "public")
+        os.makedirs(frontend_data_dir, exist_ok=True)
+        file_path = os.path.join(frontend_data_dir, "escalations.json")
+        
+        request_data = {
+            "id": req_id,
+            "who": who,
+            "what_happened": what_happened,
+            "what_agent_checked": what_agent_checked,
+            "urgency": urgency,
+            "language": language,
+            "preferred_contact": preferred_contact,
+            "timestamp": __import__('datetime').datetime.now().isoformat()
+        }
+        
+        try:
+            escalations = []
+            if os.path.exists(file_path):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    escalations = json.load(f)
+            
+            escalations.append(request_data)
+            
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(escalations, f, indent=4, ensure_ascii=False)
+                
+            # Publish data to the room so the frontend can show the popup
+            payload = json.dumps({"type": "escalation", "data": request_data}).encode("utf-8")
+            if self.ctx and self.ctx.room:
+                import asyncio
+                async def delayed_publish():
+                    await asyncio.sleep(3.0)  # Wait for agent TTS to start speaking
+                    await self.ctx.room.local_participant.publish_data(payload, reliable=True)
+                asyncio.create_task(delayed_publish())
+                
+            return f"Escalation request created successfully. Reference ID: {req_id}"
+        except Exception as e:
+            logger.error(f"Failed to create escalation: {e}")
+            return "Error: Could not create the escalation request due to a system error."
 
     @function_tool(description="Checks the current weather, active disaster alerts, and recent earthquakes for a specific district/city globally. Use this when the user asks about the situation, safety, weather, earthquakes, or alerts.")
     async def get_emergency_status(self, district: str):
@@ -164,7 +226,7 @@ async def my_agent(ctx: JobContext):
     if caller:
         instructions += f"\nMEMORY (Caller info from previous call): {caller}\nUse this info to respond if they ask about their details."
 
-    agent_instance = Assistant(instructions=instructions, user_identity=user_identity)
+    agent_instance = Assistant(instructions=instructions, user_identity=user_identity, ctx=ctx)
 
     session = AgentSession(
         stt=deepgram.STT(model="nova-3", language="hi"),

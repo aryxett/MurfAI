@@ -1,0 +1,102 @@
+[
+    {
+        "id": "REQ-7837",
+        "who": "आर्यन (Household size: 5, Location: नासिक, महाराष्ट्र)",
+        "what_happened": "Caller आर्यन reports a missing family member and is feeling very scared.",
+        "what_agent_checked": "Missing family member report in Nashik, Maharashtra",
+        "urgency": "High",
+        "language": "Hinglish",
+        "preferred_contact": "Phone",
+        "timestamp": "2026-08-12T15:59:59.652968"
+    },
+    {
+        "id": "REQ-9592",
+        "who": "आर्यन",
+        "what_happened": "Caller is trapped in mud.",
+        "what_agent_checked": "Caller is trapped in a mud puddle and needs urgent physical rescue.",
+        "urgency": "High",
+        "language": "Hindi",
+        "preferred_contact": "Phone",
+        "timestamp": "2026-08-12T16:09:40.975303"
+    },
+    {
+        "id": "REQ-3670",
+        "who": "आर्यन (Household size: 5, Location: नासिक, महाराष्ट्र)",
+        "what_happened": "Caller Aryan is trapped in a quagmire/mud and needs urgent physical rescue.",
+        "what_agent_checked": "User is trapped in a mud puddle/quagmire and requested urgent help.",
+        "urgency": "high",
+        "language": "hi",
+        "preferred_contact": "phone",
+        "timestamp": "2026-08-12T16:15:13.031019"
+    },
+    {
+        "id": "REQ-7904",
+        "who": "आर्यन (Aryan), Location: नासिक, महाराष्ट्र",
+        "what_happened": "Caller is trapped in quicksand/marshy area ('दलदल में फ़ंस गया हूं') and needs urgent physical rescue.",
+        "what_agent_checked": "Checked caller's identity (Aryan) from past interaction, verified safety status, and asked for permission to escalate due to being trapped in quicksand.",
+        "urgency": "HIGH",
+        "language": "Hindi/Hinglish",
+        "preferred_contact": "Call/Phone",
+        "timestamp": "2026-08-12T16:40:49.811796"
+    },
+    {
+        "id": "REQ-8952",
+        "who": "Aryan",
+        "what_happened": "Trapped in a swamp and needs urgent rescue.",
+        "what_agent_checked": "Confirmed user is trapped, obtained permission for escalation, advised user to stay still.",
+        "urgency": "HIGH",
+        "language": "Hindi/English",
+        "preferred_contact": "Phone call",
+        "timestamp": "2026-08-12T16:44:10.139585"
+    },
+    {
+        "id": "REQ-3095",
+        "who": "Aryan",
+        "what_happened": "Caller is trapped in a quicksand/marsh and requires immediate rescue.",
+        "what_agent_checked": "Verified identity as Aryan from Nashik. Confirmed he is trapped in quicksand/marsh and needs immediate physical rescue. Obtained explicit permission to escalate.",
+        "urgency": "CRITICAL",
+        "language": "Hindi",
+        "preferred_contact": "Phone",
+        "timestamp": "2026-08-12T17:21:28.846335"
+    },
+    {
+        "id": "REQ-5391",
+        "who": "Aryan",
+        "what_happened": "Wall collapsed due to earthquake, heavy stone fell on leg, caller cannot move and needs physical rescue.",
+        "what_agent_checked": "Caller is trapped due to a fallen wall and heavy stone on their leg after an earthquake.",
+        "urgency": "High",
+        "language": "Hindi",
+        "preferred_contact": "Phone",
+        "timestamp": "2026-08-12T22:02:37.405943"
+    },
+    {
+        "id": "REQ-6572",
+        "who": "Aryan",
+        "what_happened": "Wall collapsed due to earthquake, heavy stone fell.",
+        "what_agent_checked": "User reported wall collapsed due to earthquake and a heavy stone fell on their lake/location, needs urgent help.",
+        "urgency": "high",
+        "language": "Hindi",
+        "preferred_contact": "phone",
+        "timestamp": "2026-08-12T22:16:45.258178"
+    },
+    {
+        "id": "REQ-4788",
+        "who": "Aryan",
+        "what_happened": "Wall collapsed due to earthquake, heavy stone fell on user.",
+        "what_agent_checked": "User is trapped under heavy stone due to a wall collapse from an earthquake and needs physical rescue.",
+        "urgency": "High",
+        "language": "English",
+        "preferred_contact": "Phone",
+        "timestamp": "2026-08-12T22:23:10.551710"
+    },
+    {
+        "id": "REQ-2277",
+        "who": "Aryan",
+        "what_happened": "Wall collapsed due to earthquake, leg trapped under a heavy stone.",
+        "what_agent_checked": "Caller's leg is trapped under a heavy stone due to a collapsed wall from an earthquake, unable to move.",
+        "urgency": "High",
+        "language": "Hindi",
+        "preferred_contact": "Phone",
+        "timestamp": "2026-08-12T22:26:24.767504"
+    }
+]

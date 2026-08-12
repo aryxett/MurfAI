@@ -52,14 +52,24 @@ export default function LandingPage() {
           AI.
         </p>
 
-        <MotionLink
-          href="/call"
-          className="bg-amber text-navy-950 font-display hover:bg-amber/90 focus-visible:outline-amber inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          Begin conversation &rarr;
-        </MotionLink>
+        <div className="flex flex-col gap-4 sm:flex-row items-center justify-center">
+          <MotionLink
+            href="/call"
+            className="bg-amber text-navy-950 font-display hover:bg-amber/90 focus-visible:outline-amber inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Begin conversation &rarr;
+          </MotionLink>
+          <MotionLink
+            href="/escalations"
+            className="border border-amber text-amber font-display hover:bg-amber/10 focus-visible:outline-amber inline-flex items-center justify-center rounded-full px-8 py-4 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Escalation Dashboard
+          </MotionLink>
+        </div>
 
         <div className="mt-8 max-w-sm font-mono text-[10px] leading-relaxed text-slate-500 sm:text-xs">
           For life-threatening emergencies, contact local emergency services directly. Rakshika
