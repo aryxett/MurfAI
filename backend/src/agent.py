@@ -66,6 +66,7 @@ class Assistant(Agent):
         super().__init__(instructions=instructions)
         self.user_identity = user_identity
         self.ctx = ctx
+        self.call_successful = False
 
     @function_tool(description="Saves or updates the caller's details after getting their permission.")
     async def save_caller_info(self, name: str = None, location: str = None, household_size: int = None, mobility_needs: str = None):
@@ -128,6 +129,8 @@ class Assistant(Agent):
             
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(escalations, f, indent=4, ensure_ascii=False)
+                
+            self.call_successful = True
                 
             # Publish data to the room so the frontend can show the popup
             payload = json.dumps({"type": "escalation", "data": request_data}).encode("utf-8")
@@ -196,7 +199,8 @@ class Assistant(Agent):
                 except Exception as e:
                     # Ignore earthquake API failure silently to not break weather
                     pass
-                        
+                
+                self.call_successful = True
                 return status_message
         except Exception as e:
             return f"Error: Could not connect to emergency database due to timeout or network issue."
@@ -264,6 +268,39 @@ async def my_agent(ctx: JobContext):
     @session.on("metrics_collected")
     def on_metrics_collected(metrics):
         logger.info(f"Metrics collected (use this to check TTS latency): {metrics}")
+
+    @ctx.room.on("participant_disconnected")
+    def on_participant_disconnected(p):
+        if p.identity != user_identity:
+            return
+            
+        logger.info(f"Call ended for {user_identity}. Success: {agent_instance.call_successful}")
+        
+        frontend_data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "frontend", "public")
+        os.makedirs(frontend_data_dir, exist_ok=True)
+        file_path = os.path.join(frontend_data_dir, "analytics.json")
+        
+        call_log = {
+            "id": f"CALL-{__import__('random').randint(1000, 9999)}",
+            "timestamp": __import__('datetime').datetime.now().isoformat(),
+            "status": "Success" if agent_instance.call_successful else "Failed"
+        }
+        
+        try:
+            logs = []
+            if os.path.exists(file_path):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    try:
+                        logs = json.load(f)
+                    except json.JSONDecodeError:
+                        logs = []
+            
+            logs.append(call_log)
+            
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(logs, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"Failed to save analytics: {e}")
 
 
 if __name__ == "__main__":

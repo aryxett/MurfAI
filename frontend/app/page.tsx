@@ -67,7 +67,7 @@ export default function LandingPage() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
           >
-            Escalation Dashboard
+            Admin Dashboard
           </MotionLink>
         </div>
 
