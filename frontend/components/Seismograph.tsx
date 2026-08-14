@@ -3,12 +3,19 @@
 import React, { useEffect, useRef } from 'react';
 
 export type SeismoMode = 'idle' | 'connecting' | 'listening' | 'speaking';
+export type SeismoAgent = 'rakshika' | 'doctor';
 
 interface SeismographProps {
   mode: SeismoMode;
   amplitude?: number;
   label?: string;
   className?: string;
+  /**
+   * Which agent is currently active on the call. Only affects color while
+   * mode === 'speaking' (rakshika = red, doctor = blue). Defaults to
+   * 'rakshika' so existing usages of this component keep working unchanged.
+   */
+  activeAgent?: SeismoAgent;
 }
 
 export function Seismograph({
@@ -16,6 +23,7 @@ export function Seismograph({
   amplitude = 0,
   label = 'Voice visualizer',
   className = '',
+  activeAgent = 'rakshika',
 }: SeismographProps) {
   const pathRef = useRef<SVGPathElement>(null);
   const dotRef = useRef<SVGCircleElement>(null);
@@ -92,8 +100,8 @@ export function Seismograph({
   if (mode === 'listening') {
     strokeColor = 'var(--safe-green)';
   } else if (mode === 'speaking') {
-    strokeColor = 'var(--alert-red)';
-    filter = 'drop-shadow(0 0 8px var(--alert-red))';
+    strokeColor = activeAgent === 'doctor' ? 'var(--doctor-blue)' : 'var(--alert-red)';
+    filter = `drop-shadow(0 0 8px ${strokeColor})`;
   } else if (mode === 'connecting') {
     strokeColor = 'var(--amber)';
   }

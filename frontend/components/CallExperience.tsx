@@ -24,8 +24,26 @@ export function CallExperience() {
   
   const { segments: userTranscriptions } = useTrackTranscription(microphoneTrackRef);
 
+  const [activeAgent, setActiveAgent] = React.useState('rakshika');
+  const [isSwitching, setIsSwitching] = React.useState(false);
+
+  // Clear isSwitching when agent is ready again
+  React.useEffect(() => {
+    if (isSwitching && (state === 'listening' || state === 'speaking')) {
+      setIsSwitching(false);
+    }
+  }, [state, isSwitching]);
+
   // Map state to UI text & color
   const stateConfig = useMemo(() => {
+    if (isSwitching || activeAgent.startsWith('connecting_')) {
+      return {
+        label: 'Connecting...',
+        hint: activeAgent === 'connecting_doctor' ? 'Transferring to Doctor Gurleen' : 'Returning to Rakshika',
+        color: 'amber' as const,
+      };
+    }
+
     switch (state) {
       case 'listening':
         return {
@@ -41,7 +59,7 @@ export function CallExperience() {
         };
       case 'speaking':
         return {
-          label: 'Rakshika is speaking',
+          label: activeAgent === 'doctor' ? 'Doctor Gurleen is speaking' : 'Rakshika is speaking',
           hint: 'Playing back guidance',
           color: 'red' as const,
         };
@@ -53,7 +71,7 @@ export function CallExperience() {
           color: 'amber' as const,
         };
     }
-  }, [state]);
+  }, [state, activeAgent, isSwitching]);
 
   const latestAgentText = agentTranscriptions[agentTranscriptions.length - 1]?.text;
   const latestUserText = userTranscriptions[userTranscriptions.length - 1]?.text;
@@ -65,9 +83,9 @@ export function CallExperience() {
   React.useEffect(() => {
     if (latestAgentText && latestAgentText !== prevAgentText.current) {
       prevAgentText.current = latestAgentText;
-      setActiveSubtitle({ text: latestAgentText, label: 'Rakshika', isUser: false });
+      setActiveSubtitle({ text: latestAgentText, label: activeAgent === 'doctor' ? 'Doctor Gurleen' : 'Rakshika', isUser: false });
     }
-  }, [latestAgentText]);
+  }, [latestAgentText, activeAgent]);
 
   React.useEffect(() => {
     if (latestUserText && latestUserText !== prevUserText.current) {
@@ -114,6 +132,14 @@ export function CallExperience() {
           setShowEscalation(false);
           setEscalationData(null);
         }, 7500);
+      } else if (payload.type === 'agent_switch') {
+        if (payload.data && payload.data.agent) {
+          setActiveAgent(payload.data.agent);
+          // Only show switching state if we are actually swapping agents
+          if (payload.data.agent !== activeAgent) {
+             setIsSwitching(true);
+          }
+        }
       }
     } catch (e) {
       console.error('Failed to parse escalation data channel message', e);
@@ -137,11 +163,11 @@ export function CallExperience() {
       <div className="flex-1 flex flex-col items-center justify-center w-full relative">
         <AgentAudioVisualizerAura
           size="xl"
-          state={state}
+          state={(isSwitching || activeAgent.startsWith('connecting_')) ? 'speaking' : state}
           audioTrack={audioTrack}
-          color="#e60026"
+          color={activeAgent === 'doctor' || activeAgent === 'connecting_rakshika' ? '#3b82f6' : '#e60026'}
           colorShift={0.1}
-          className="mb-12"
+          className="mb-12 transition-all duration-700 ease-in-out"
         />
         
         {/* Subtitles */}

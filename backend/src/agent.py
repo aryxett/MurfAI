@@ -27,6 +27,7 @@ from livekit.agents import (
 from livekit.plugins import murf, silero, google, deepgram, noise_cancellation
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 from db import get_caller, save_caller, delete_caller
+from orb_state import broadcast_active_agent
 
 logger = logging.getLogger("agent")
 
@@ -57,6 +58,9 @@ ESCALATION RULES (HUMAN HELP):
 - CRITICAL: DO NOT call the `create_escalation` tool in the same turn when you ask for permission. You MUST stop speaking and wait for the user to reply.
 - STEP 2: Only call the `create_escalation` tool AFTER the user explicitly says yes in their next reply.
 - STEP 3: After the tool succeeds, give them the Reference ID and a clear next step. Example: "आपकी रिक्वेस्ट रेस्क्यू टीम को भेज दी गई है। आपका रेफरेंस नंबर [ID] है। कृपया शांत रहें, टीम जल्द ही आपसे संपर्क करेगी।"
+DOCTOR HANDOFF RULES:
+- If the caller describes an injury, medical symptom, health emergency, or explicitly asks for medical/first-aid advice (e.g. bleeding, chest pain, breathing difficulty, someone unconscious, 'mujhe chot lag gayi hai'), you MUST hand them off to the doctor specialist using the `transfer_to_doctor_specialist` tool.
+- CRITICAL: You MUST call the tool SILENTLY. DO NOT generate any conversational text in your response when calling this tool. The tool itself will automatically speak the empathetic transfer message to the user.
 - CRITICAL RULE FOR TOOLS: When calling the `create_escalation` tool, you MUST fill all the function arguments in strictly English ONLY. Never use Hindi for the tool arguments. For the `who` argument, provide ONLY the short first name of the caller (no extra details).
 STYLE: Keep sentences short and concise. Speak at a calm, deliberate pace. If the user is silent, gently prompt them by asking if they are safe. Do not use complex formatting.
 """
@@ -145,6 +149,36 @@ class Assistant(Agent):
         except Exception as e:
             logger.error(f"Failed to create escalation: {e}")
             return "Error: Could not create the escalation request due to a system error."
+
+    @function_tool(
+        description=(
+            "Hand off the call to the Doctor Specialist. Use this ONLY when the "
+            "caller describes an injury, medical symptom, health emergency, or "
+            "explicitly asks for medical/first-aid advice (e.g. bleeding, chest "
+            "pain, breathing difficulty, someone unconscious, 'mujhe chot lag "
+            "gayi hai', 'mera pet dukh raha hai'). Do NOT use this for shelter "
+            "questions, weather/disaster status, or general rescue escalation - "
+            "those stay with you and use get_emergency_status / create_escalation."
+        )
+    )
+    async def transfer_to_doctor_specialist(self, context: RunContext):
+        from doctor_specialist import DoctorSpecialist
+        import asyncio
+        from orb_state import broadcast_active_agent
+        
+        # Broadcast connecting state immediately to show quick UI update
+        await broadcast_active_agent(self.ctx, "connecting_doctor")
+
+        # Manually queue the empathetic speech
+        await context.session.say(
+            "ओह, घबराइए मत। मैं आपको एक स्पेशलिस्ट डॉक्टर से कनेक्ट कराती हूँ, वो आपकी इसमें मदद कर सकती हैं।",
+            allow_interruptions=False,
+        )
+
+        # Wait 5.0 seconds to allow Rakshika's TTS to finish speaking
+        await asyncio.sleep(5.0)
+
+        return DoctorSpecialist(user_identity=self.user_identity, ctx=self.ctx)
 
     @function_tool(description="Checks the current weather, active disaster alerts, and recent earthquakes for a specific district/city globally. Use this when the user asks about the situation, safety, weather, earthquakes, or alerts.")
     async def get_emergency_status(self, district: str):
@@ -254,6 +288,10 @@ async def my_agent(ctx: JobContext):
     )
 
     logger.info(f"Participant joined with identity: {user_identity}")
+
+    # Explicitly set the orb to "rakshika" at the start of every call, so the
+    # frontend is always in a known state (defensive - handles reconnects too)
+    await broadcast_active_agent(ctx, "rakshika")
 
     # Check if this is an outbound call based on the room name
     is_outbound = ctx.room.name.startswith("outbound-call")

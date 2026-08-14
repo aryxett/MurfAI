@@ -233,7 +233,7 @@ export default function CallPage() {
               </ol>
 
               <motion.button
-                onClick={handleStartConversation}
+                onClick={() => handleStartConversation(false)}
                 className="border-line text-off-white hover:bg-navy-800 rounded-full border px-6 py-3 font-mono text-sm font-medium transition-colors"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
@@ -253,7 +253,7 @@ export default function CallPage() {
                 {errorMsg}
               </p>
               <motion.button
-                onClick={handleStartConversation}
+                onClick={() => handleStartConversation(false)}
                 className="border-line text-off-white hover:bg-navy-800 rounded-full border px-6 py-3 font-mono text-sm font-medium transition-colors"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}

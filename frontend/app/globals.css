@@ -17,6 +17,7 @@
   --color-amber: #f0a93a;
   --color-safe-green: #35b08a;
   --color-alert-red: #e15252;
+  --color-doctor-blue: #3b82f6;
 }
 
 :root {
@@ -32,6 +33,7 @@
   --amber: #f0a93a;
   --safe-green: #35b08a;
   --alert-red: #e15252;
+  --doctor-blue: #3b82f6;
 }
 
 @media (prefers-reduced-motion: reduce) {
